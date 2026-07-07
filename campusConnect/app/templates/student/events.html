@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Events{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3" style="height:calc(100vh - 56px); overflow:hidden; display:flex; flex-direction:column;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0 fw-bold">Discover Events</h5>
+    <form method="GET" action="{{ url_for('student.events') }}" class="d-flex">
+      <input type="text" name="search" class="form-control form-control-sm me-2" placeholder="Search..." value="{{ search }}" style="width:200px;">
+      <button type="submit" class="btn btn-dark btn-sm"><i class="bi bi-search"></i></button>
+    </form>
+  </div>
+
+  <div class="card flex-grow-1" style="overflow:hidden;">
+    <div class="card-body p-0" style="overflow:auto;">
+      <table class="table table-bordered table-sm mb-0">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Date</th>
+            <th>Venue</th>
+            <th>Seats Left</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for event in events_page.items %}
+          <tr>
+            <td>
+              <a href="{{ url_for('student.event_detail', event_id=event.id) }}" class="text-dark fw-bold text-decoration-none">{{ event.title }}</a>
+            </td>
+            <td class="small">{{ event.event_date.strftime('%d %b %Y, %H:%M') }}</td>
+            <td class="small">{{ event.venue[:30] }}{{ '...' if event.venue|length > 30 }}</td>
+            <td>{{ event.available_seats }}/{{ event.total_seats }}</td>
+            <td>
+              {% if event.id in registered_ids %}
+                <span class="badge bg-dark">Registered</span>
+              {% elif event.available_seats <= 0 %}
+                <span class="badge bg-secondary">Full</span>
+              {% else %}
+                <a href="{{ url_for('student.event_detail', event_id=event.id) }}" class="btn btn-dark btn-sm py-0">View</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="text-center text-muted py-3 small">No events found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if events_page.pages > 1 %}
+  <nav class="mt-2 d-flex justify-content-between align-items-center">
+    <small class="text-muted">Page {{ events_page.page }} of {{ events_page.pages }}</small>
+    <ul class="pagination pagination-sm mb-0">
+      <li class="page-item {% if not events_page.has_prev %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('student.events', page=events_page.prev_num, search=search) if events_page.has_prev else '#' }}">Prev</a>
+      </li>
+      <li class="page-item {% if not events_page.has_next %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('student.events', page=events_page.next_num, search=search) if events_page.has_next else '#' }}">Next</a>
+      </li>
+    </ul>
+  </nav>
+  {% endif %}
+</div>
+{% endblock %}

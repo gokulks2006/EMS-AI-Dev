@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-center" style="height:calc(100vh - 56px);">
+  <div class="card" style="width:340px;">
+    <div class="card-header text-center py-3">
+      <i class="bi bi-mortarboard-fill me-1"></i> Student Login
+    </div>
+    <div class="card-body p-4">
+      <form method="POST" action="{{ url_for('auth.login') }}">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+          {{ form.email.label(class="form-label small fw-semibold") }}
+          {{ form.email(class="form-control form-control-sm" + (" is-invalid" if form.email.errors else ""), placeholder="you@college.edu") }}
+          {% for e in form.email.errors %}<div class="invalid-feedback small">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="mb-3">
+          {{ form.password.label(class="form-label small fw-semibold") }}
+          {{ form.password(class="form-control form-control-sm" + (" is-invalid" if form.password.errors else ""), placeholder="Password") }}
+          {% for e in form.password.errors %}<div class="invalid-feedback small">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="mb-3 form-check">
+          {{ form.remember_me(class="form-check-input") }}
+          {{ form.remember_me.label(class="form-check-label small") }}
+        </div>
+        <button type="submit" class="btn btn-dark btn-sm w-100">Sign In</button>
+      </form>
+      <hr class="my-3">
+      <div class="text-center small">
+        No account? <a href="{{ url_for('auth.register') }}" class="text-dark fw-bold">Register</a>
+        &nbsp;|&nbsp;
+        <a href="{{ url_for('auth.admin_login') }}" class="text-muted">Admin</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePassword() {
+  const input = document.getElementById("passwordInput");
+  const icon = document.getElementById("eyeIcon");
+  if (input.type === "password") { input.type = "text"; icon.className = "bi bi-eye-slash"; }
+  else { input.type = "password"; icon.className = "bi bi-eye"; }
+}
+</script>
+{% endblock %}

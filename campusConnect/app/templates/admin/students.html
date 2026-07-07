@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Manage Students{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3" style="height:calc(100vh - 56px); overflow:hidden; display:flex; flex-direction:column;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0 fw-bold">Manage Students</h5>
+    <small class="text-muted">{{ students_page.total }} total</small>
+  </div>
+
+  <div class="card flex-grow-1" style="overflow:hidden;">
+    <div class="card-body p-0" style="overflow:auto;">
+      <table class="table table-bordered table-sm mb-0">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Roll No</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students_page.items %}
+          <tr>
+            <td class="fw-bold">{{ student.full_name }}</td>
+            <td class="small">{{ student.email }}</td>
+            <td class="small">{{ student.roll_number or '-' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" class="text-center text-muted py-3 small">No students found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if students_page.pages > 1 %}
+  <nav class="mt-2 d-flex justify-content-between align-items-center">
+    <small class="text-muted">Page {{ students_page.page }} of {{ students_page.pages }}</small>
+    <ul class="pagination pagination-sm mb-0">
+      <li class="page-item {% if not students_page.has_prev %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('admin.students', page=students_page.prev_num) if students_page.has_prev else '#' }}">Prev</a>
+      </li>
+      <li class="page-item {% if not students_page.has_next %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('admin.students', page=students_page.next_num) if students_page.has_next else '#' }}">Next</a>
+      </li>
+    </ul>
+  </nav>
+  {% endif %}
+</div>
+{% endblock %}

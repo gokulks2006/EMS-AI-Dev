@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3" style="height:calc(100vh - 56px); overflow:hidden;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h5 class="mb-0 fw-bold">Welcome, {{ current_user.first_name }}!</h5>
+      <small class="text-muted">Your CampusConnect overview</small>
+    </div>
+    <a href="{{ url_for('student.events') }}" class="btn btn-dark btn-sm"><i class="bi bi-calendar-event me-1"></i>Browse Events</a>
+  </div>
+
+  <div class="row g-3" style="height:calc(100% - 60px); overflow:hidden;">
+    <!-- My Upcoming Events -->
+    <div class="col-lg-8">
+      <div class="card h-100">
+        <div class="card-header">My Upcoming Events</div>
+        <div class="card-body p-0" style="overflow:auto;">
+          {% if upcoming_registrations %}
+          <table class="table table-bordered table-sm mb-0">
+            <thead>
+              <tr>
+                <th>Event</th>
+                <th>Date</th>
+                <th>Venue</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for reg in upcoming_registrations %}
+              {% set event = reg.event %}
+              <tr>
+                <td>{{ event.title }}</td>
+                <td class="small">{{ event.event_date.strftime('%d %b, %H:%M') }}</td>
+                <td class="small">{{ event.venue[:25] }}{{ '...' if event.venue|length > 25 }}</td>
+                <td><span class="badge bg-dark">{{ reg.status }}</span></td>
+                <td><a href="{{ url_for('student.event_detail', event_id=event.id) }}" class="btn btn-outline-dark btn-sm py-0">View</a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <div class="text-center text-muted py-4 small">
+            <i class="bi bi-calendar-x fs-3 d-block mb-2"></i>
+            No upcoming events. <a href="{{ url_for('student.events') }}" class="text-dark fw-bold">Browse events</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Discover -->
+    <div class="col-lg-4">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span>Discover Events</span>
+          <a href="{{ url_for('student.events') }}" class="text-white small">Explore</a>
+        </div>
+        <div class="card-body p-0" style="overflow:auto;">
+          {% if recent_events %}
+          <ul class="list-group list-group-flush">
+            {% for event in recent_events %}
+            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+              <div>
+                <div class="small fw-bold">{{ event.title }}</div>
+                <div class="small text-muted"><i class="bi bi-calendar2 me-1"></i>{{ event.event_date.strftime('%d %b') }} &middot; {{ event.available_seats }} left</div>
+              </div>
+              <a href="{{ url_for('student.event_detail', event_id=event.id) }}" class="btn btn-outline-dark btn-sm py-0">View</a>
+            </li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <div class="text-center text-muted py-4 small">No events yet.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Registrations: {{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3" style="height:calc(100vh - 56px); overflow:hidden; display:flex; flex-direction:column;">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <a href="{{ url_for('admin.events') }}" class="btn btn-outline-dark btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <div>
+      <h5 class="mb-0 fw-bold">Registrations</h5>
+      <small class="text-muted">Event: {{ event.title }}</small>
+    </div>
+  </div>
+
+  <div class="card flex-grow-1" style="overflow:hidden;">
+    <div class="card-body p-0" style="overflow:auto;">
+      <table class="table table-bordered table-sm mb-0">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Roll No</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for reg in registrations %}
+          {% set student = reg.student %}
+          <tr>
+            <td class="fw-bold">{{ student.full_name }}</td>
+            <td class="small">{{ student.roll_number or 'N/A' }}</td>
+            <td class="small">{{ student.email }}</td>
+            <td><span class="badge bg-dark">{{ reg.status|upper }}</span></td>
+            <td class="text-end">
+              <form action="{{ url_for('admin.update_registration_status', reg_id=reg.id) }}" method="POST" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                {% if reg.status == 'pending' %}
+                  <button type="submit" name="status" value="approved" class="btn btn-dark btn-sm py-0">Approve</button>
+                  <button type="submit" name="status" value="rejected" class="btn btn-outline-dark btn-sm py-0">Reject</button>
+                {% elif reg.status == 'approved' %}
+                  <button type="submit" name="status" value="rejected" class="btn btn-outline-dark btn-sm py-0">Reject</button>
+                {% elif reg.status == 'rejected' %}
+                  <button type="submit" name="status" value="approved" class="btn btn-dark btn-sm py-0">Approve</button>
+                {% endif %}
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="text-center text-muted py-3 small">No registrations for this event.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

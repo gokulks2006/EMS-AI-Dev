@@ -1,0 +1,67 @@
+# Python bytecode and caches
+_pycache_/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+campusConnect/.venv/
+
+# Environment and local config
+.env
+.env.*
+!.env.example
+campusConnect/.env
+campusConnect/.env.*
+!campusConnect/.env.example
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Flask runtime files
+instance/
+campusConnect/app/static/uploads/
+
+# Test, coverage, and type-checker output
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+playwright-report/
+test-results/
+
+# Packaging/build artifacts
+build/
+dist/
+site/
+.eggs/
+*.egg-info/
+pip-wheel-metadata/
+
+# Logs and temp files
+*.log
+logs/
+tmp/
+temp/
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local tooling artifacts
+.refact/

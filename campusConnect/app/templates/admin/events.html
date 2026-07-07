@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Events{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-3" style="height:calc(100vh - 56px); overflow:auto;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0 fw-bold">Manage Events</h5>
+    <a href="{{ url_for('admin.event_new') }}" class="btn btn-dark btn-sm"><i class="bi bi-plus me-1"></i>New Event</a>
+  </div>
+
+  <div class="card">
+    <div class="card-body p-0">
+      <table class="table table-bordered table-sm mb-0">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Date</th>
+            <th>Venue</th>
+            <th>Seats</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for event in events_page.items %}
+          <tr>
+            <td>{{ event.title }}</td>
+            <td>{{ event.event_date.strftime('%d %b %Y, %H:%M') }}</td>
+            <td>{{ event.venue }}</td>
+            <td>{{ event.available_seats }}/{{ event.total_seats }}</td>
+            <td><span class="badge bg-dark">{{ event.status }}</span></td>
+            <td>
+              <a href="{{ url_for('admin.event_edit', event_id=event.id) }}" class="btn btn-outline-dark btn-sm py-0 me-1">Edit</a>
+              <a href="{{ url_for('admin.registrations', event_id=event.id) }}" class="btn btn-outline-dark btn-sm py-0 me-1">Regs</a>
+              <form method="POST" action="{{ url_for('admin.event_delete', event_id=event.id) }}" class="d-inline" onsubmit="return confirm('Delete this event?')">
+                {{ form.hidden_tag() if form is defined }}
+                <button class="btn btn-outline-danger btn-sm py-0" type="submit">Del</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="text-center text-muted py-3 small">No events found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if events_page.pages > 1 %}
+  <nav class="mt-3 d-flex justify-content-between align-items-center">
+    <small class="text-muted">Page {{ events_page.page }} of {{ events_page.pages }}</small>
+    <ul class="pagination pagination-sm mb-0">
+      <li class="page-item {% if not events_page.has_prev %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('admin.events', page=events_page.prev_num) }}">Prev</a>
+      </li>
+      <li class="page-item {% if not events_page.has_next %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('admin.events', page=events_page.next_num) }}">Next</a>
+      </li>
+    </ul>
+  </nav>
+  {% endif %}
+</div>
+{% endblock %}

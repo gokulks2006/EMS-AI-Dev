@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Internal Server Error{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-center" style="height:calc(100vh - 56px);">
+  <div class="text-center">
+    <div class="fs-1 fw-bold">500</div>
+    <div class="fw-bold mb-2">Internal Server Error</div>
+    <p class="small text-muted mb-3">Something went wrong. Please try again later.</p>
+    <a href="{{ url_for('main.index') }}" class="btn btn-dark btn-sm"><i class="bi bi-house-door me-1"></i>Return Home</a>
+  </div>
+</div>
+{% endblock %}

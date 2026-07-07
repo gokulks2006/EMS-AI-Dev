@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}My Registrations{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3" style="height:calc(100vh - 56px); overflow:hidden; display:flex; flex-direction:column;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h5 class="mb-0 fw-bold">My Registrations</h5>
+      <small class="text-muted">Track your event registrations</small>
+    </div>
+  </div>
+
+  <div class="card flex-grow-1" style="overflow:hidden;">
+    <div class="card-body p-0" style="overflow:auto;">
+      <table class="table table-bordered table-sm mb-0">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Date</th>
+            <th>Venue</th>
+            <th>Registered</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for reg in registrations %}
+          {% set event = reg.event %}
+          <tr>
+            <td>
+              <a href="{{ url_for('student.event_detail', event_id=event.id) }}" class="text-dark text-decoration-none fw-bold">{{ event.title }}</a>
+            </td>
+            <td class="small">{{ event.event_date.strftime('%d %b %Y, %H:%M') }}</td>
+            <td class="small">{{ event.venue[:25] }}{{ '...' if event.venue|length > 25 }}</td>
+            <td class="small">{{ reg.registered_at.strftime('%d %b %Y') }}</td>
+            <td><span class="badge bg-dark">{{ reg.status|upper }}</span></td>
+            <td>
+              {% if reg.status in ['pending', 'approved'] and event.event_date > now %}
+                <form action="{{ url_for('student.cancel_registration', reg_id=reg.id) }}" method="POST" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                  <button type="submit" class="btn btn-outline-dark btn-sm py-0" onclick="return confirm('Cancel your registration?')">Cancel</button>
+                </form>
+              {% else %}
+                <span class="text-muted small">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-3 small">
+              No registrations yet. <a href="{{ url_for('student.events') }}" class="text-dark fw-bold">Browse events</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
