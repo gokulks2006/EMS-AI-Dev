@@ -29,8 +29,9 @@
         <div class="row g-3 mb-3">
           <div class="col-7">
             {{ form.event_date.label(class="form-label small fw-semibold") }}
-            {{ form.event_date(class="form-control form-control-sm" + (" is-invalid" if form.event_date.errors else "")) }}
+            {{ form.event_date(class="form-control form-control-sm" + (" is-invalid" if form.event_date.errors else ""), id="event_date_input") }}
             {% for e in form.event_date.errors %}<div class="invalid-feedback small">{{ e }}</div>{% endfor %}
+            <div class="form-text small text-muted">Only future dates are allowed.</div>
           </div>
           <div class="col-5">
             {{ form.total_seats.label(class="form-label small fw-semibold") }}
@@ -47,3 +48,19 @@
   </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+  // Set the minimum selectable datetime to "now" so past dates are greyed out in the picker
+  (function() {
+    const input = document.getElementById('event_date_input');
+    if (input) {
+      const now = new Date();
+      // Format: YYYY-MM-DDTHH:MM
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      input.min = now.toISOString().slice(0, 16);
+    }
+  })();
+</script>
+{% endblock %}
+
