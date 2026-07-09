@@ -35,6 +35,7 @@ def upgrade():
     sa.Column('venue', sa.String(length=200), nullable=False),
     sa.Column('event_date', sa.DateTime(), nullable=False),
     sa.Column('total_seats', sa.Integer(), nullable=False),
+    sa.Column('status', sa.String(length=20), nullable=False),
     sa.Column('available_seats', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )

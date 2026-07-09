@@ -76,9 +76,14 @@ def create_app(config_name: str = "default") -> Flask:
     _register_commands(app)
 
     # ------------------------------------------------------------------
-    # Context processors - inject variables into all templates
+    # Register context processors - inject variables into all templates
     # ------------------------------------------------------------------
     _register_context_processors(app)
+
+    # ------------------------------------------------------------------
+    # Prevent browser caching of protected pages (back-button security)
+    # ------------------------------------------------------------------
+    _register_no_cache_headers(app)
 
     return app
 
@@ -124,21 +129,21 @@ def _register_commands(app: Flask) -> None:
         """Seed the database with initial admin and sample data."""
         from .utils.seed import seed_database
         seed_database()
-        print("✓ Database seeded successfully.")
+        print("[SUCCESS] Database seeded successfully.")
 
     @app.cli.command("create-admin")
     def create_admin():
         """Create default admin user."""
         from .utils.seed import create_default_admin
         create_default_admin()
-        print("✓ Default admin created.")
+        print("[SUCCESS] Default admin created.")
 
     @app.cli.command("reset-db")
     def reset_db():
         """Drop all tables and recreate (dev only)."""
         db.drop_all()
         db.create_all()
-        print("✓ Database reset complete.")
+        print("[SUCCESS] Database reset complete.")
 
 
 def _register_context_processors(app: Flask) -> None:
@@ -149,9 +154,28 @@ def _register_context_processors(app: Flask) -> None:
 
     @app.context_processor
     def inject_globals():
-        """Inject app name and current year into every template."""
+        """Inject app name, current year, and current datetime into every template."""
         from datetime import datetime
         return {
             "app_name": "CampusConnect",
             "current_year": datetime.now().year,
+            "now": datetime.utcnow(),
         }
+
+
+def _register_no_cache_headers(app: Flask) -> None:
+    """
+    Prevent browser from caching protected pages.
+    After logout, pressing back should NOT show protected content — it will
+    trigger a fresh request which the server will redirect to login.
+    """
+    from flask import request as flask_request
+    from flask_login import current_user
+
+    @app.after_request
+    def set_no_cache(response):
+        """Set no-cache headers on all responses to prevent back-button visual bugs."""
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response

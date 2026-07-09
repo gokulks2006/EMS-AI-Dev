@@ -16,6 +16,8 @@ auth_bp = Blueprint("auth", __name__)
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
     if current_user.is_authenticated:
+        if isinstance(current_user, Admin):
+            return redirect(url_for("admin.dashboard"))
         return redirect(url_for("student.dashboard"))
 
     form = StudentRegistrationForm()
@@ -77,8 +79,10 @@ def login():
 
 @auth_bp.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
-    if current_user.is_authenticated and isinstance(current_user, Admin):
-        return redirect(url_for("admin.dashboard"))
+    if current_user.is_authenticated:
+        if isinstance(current_user, Admin):
+            return redirect(url_for("admin.dashboard"))
+        return redirect(url_for("student.dashboard"))
 
     form = AdminLoginForm()
 
@@ -97,9 +101,13 @@ def admin_login():
     return render_template("auth/admin_login.html", form=form)
 
 
-@auth_bp.route("/logout")
+@auth_bp.route("/logout", methods=["GET", "POST"])
 @login_required
 def logout():
     logout_user()
     flash("You have been logged out.", "info")
-    return redirect(url_for("main.index"))
+    from flask import make_response
+    resp = make_response(redirect(url_for("main.index")))
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    return resp

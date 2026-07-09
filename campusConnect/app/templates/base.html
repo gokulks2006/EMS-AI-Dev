@@ -71,9 +71,9 @@
   {% if messages %}
   <div class="px-3 pt-2">
     {% for category, message in messages %}
-    <div class="alert alert-{{ 'danger' if category == 'danger' else 'secondary' if category == 'info' else category }} alert-dismissible py-2 mb-1 small" role="alert">
-      {{ message }}
-      <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+    <div class="alert alert-{{ 'danger' if category == 'danger' else 'secondary' if category == 'info' else category }} d-flex align-items-center justify-content-between py-2 mb-1 small" role="alert">
+      <span>{{ message }}</span>
+      <button type="button" class="btn-close btn-sm flex-shrink-0 ms-3" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     {% endfor %}
   </div>

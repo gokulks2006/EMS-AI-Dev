@@ -39,7 +39,7 @@ def index():
     # Platform-wide statistics for the hero section
     stats = {
         "total_events": Event.query.filter_by(status="published").count(),
-        "total_students": Student.query.filter_by(is_active=True).count(),
+        "total_students": Student.query.count(),
         "total_registrations": db.session.execute(
             db.text("SELECT COUNT(*) FROM registrations")
         ).scalar() or 0,

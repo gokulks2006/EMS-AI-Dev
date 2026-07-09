@@ -10,7 +10,7 @@
       <div class="alert alert-secondary py-2 mb-3 small">
         <i class="bi bi-exclamation-triangle me-1"></i> Restricted access. Authorized personnel only.
       </div>
-      <form method="POST" action="{{ url_for('auth.admin_login') }}">
+      <form method="POST" action="{{ url_for('auth.admin_login') }}" novalidate>
         {{ form.hidden_tag() }}
         <div class="mb-3">
           {{ form.email.label(class="form-label small fw-semibold") }}
