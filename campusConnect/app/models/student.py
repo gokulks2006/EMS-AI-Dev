@@ -23,8 +23,8 @@ class Student(UserMixin):
         first_name: str,
         last_name: str,
         email: str,
-        password_hash: str = "",
-        roll_number: str = None,
+        password_hash: str,
+        roll_number: str,
         is_active: bool = True,
     ):
         self.id            = id
@@ -80,8 +80,8 @@ class Student(UserMixin):
             first_name=row["first_name"],
             last_name=row["last_name"],
             email=row["email"],
-            password_hash=row.get("password_hash", ""),
-            roll_number=row.get("roll_number"),
+            password_hash=row["password_hash"],
+            roll_number=row["roll_number"],
             is_active=row.get("is_active", 1),
         )
 

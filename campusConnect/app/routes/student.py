@@ -48,7 +48,7 @@ def dashboard():
             """
             SELECT r.id, r.student_id, r.event_id, r.status, r.remarks,
                    r.registered_at, r.approved_at, r.cancelled_at, r.attendance_marked,
-                   e.title AS event_title, e.event_date, e.venue AS event_venue
+                   e.title AS event_title, e.event_date
             FROM registrations r
             JOIN events e ON e.id = r.event_id
             WHERE r.student_id = %s AND e.event_date > NOW()
@@ -124,7 +124,17 @@ def events():
         )
         registered_ids = {r["event_id"] for r in cur.fetchall()}
 
-    pagination = Pagination(items, page, per_page, total)
+    total_pages = (total + per_page - 1) // per_page
+    pagination = {
+        "items": items,
+        "page": page,
+        "pages": total_pages,
+        "total": total,
+        "has_prev": page > 1,
+        "has_next": page < total_pages,
+        "prev_num": page - 1,
+        "next_num": page + 1,
+    }
     return render_template(
         "student/events.html",
         events_page=pagination,
@@ -257,7 +267,7 @@ def my_registrations():
             """
             SELECT r.id, r.student_id, r.event_id, r.status, r.remarks,
                    r.registered_at, r.approved_at, r.cancelled_at, r.attendance_marked,
-                   e.title AS event_title, e.event_date, e.venue AS event_venue
+                   e.title AS event_title, e.event_date
             FROM registrations r
             JOIN events e ON e.id = r.event_id
             WHERE r.student_id = %s
