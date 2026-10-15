@@ -1,27 +1,66 @@
 """
-CampusConnect - Admin Model
-==============================
+CampusConnect - Admin Model (Pure SQL)
+=======================================
+Plain Python class that mirrors the `admins` table.
+No ORM — all database interaction happens through raw SQL in routes/seed.
 """
 
 from flask_login import UserMixin
-from ..extensions import db, bcrypt
+from flask_bcrypt import Bcrypt
 
-class Admin(UserMixin, db.Model):
-    __tablename__ = "admins"
+_bcrypt = Bcrypt()
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(255), nullable=False)
 
-    def set_password(self, password: str) -> None:
-        self.password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
+class Admin(UserMixin):
+    """
+    Represents a row from the `admins` table.
+    Attributes map 1-to-1 to table columns.
+    """
 
-    def check_password(self, password: str) -> bool:
-        return bcrypt.check_password_hash(self.password_hash, password)
+    def __init__(self, id: int, name: str, email: str, password_hash: str):
+        self.id            = id
+        self.name          = name
+        self.email         = email
+        self.password_hash = password_hash
+
+    # ------------------------------------------------------------------
+    # Flask-Login interface
+    # ------------------------------------------------------------------
 
     def get_id(self) -> str:
+        """Prefix 'a_' to distinguish admin sessions from student sessions."""
         return f"a_{self.id}"
+
+    @property
+    def is_active(self) -> bool:
+        return True
+
+    # ------------------------------------------------------------------
+    # Password helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def hash_password(password: str) -> str:
+        """Return a bcrypt hash for the given plaintext password."""
+        return _bcrypt.generate_password_hash(password).decode("utf-8")
+
+    def check_password(self, password: str) -> bool:
+        """Verify a plaintext password against the stored hash."""
+        return _bcrypt.check_password_hash(self.password_hash, password)
+
+    # ------------------------------------------------------------------
+    # SQL helpers — build Admin from a DB row dict
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def from_row(cls, row: dict) -> "Admin":
+        """Construct an Admin instance from a pymysql DictCursor row."""
+        return cls(
+            id=row["id"],
+            name=row["name"],
+            email=row["email"],
+            password_hash=row["password_hash"],
+        )
 
     def __repr__(self):
         return f"<Admin {self.email}>"

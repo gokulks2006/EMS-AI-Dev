@@ -1,54 +1,89 @@
 """
-CampusConnect - Student Model
-================================
+CampusConnect - Student Model (Pure SQL)
+==========================================
+Plain Python class that mirrors the `students` table.
+No ORM — all database interaction happens through raw SQL.
 """
 
-from datetime import datetime
 from flask_login import UserMixin
-from ..extensions import db, bcrypt, login_manager
+from flask_bcrypt import Bcrypt
 
-class Student(UserMixin, db.Model):
-    __tablename__ = "students"
+_bcrypt = Bcrypt()
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    first_name = db.Column(db.String(50), nullable=False)
-    last_name = db.Column(db.String(50), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(255), nullable=False)
-    roll_number = db.Column(db.String(20), unique=True, nullable=False)
 
-    registrations = db.relationship("Registration", backref="student", lazy="dynamic", cascade="all, delete-orphan")
+class Student(UserMixin):
+    """
+    Represents a row from the `students` table.
+    Attributes map 1-to-1 to table columns.
+    """
 
-    def __init__(self, **kwargs):
-        password = kwargs.pop("password", None)
-        super(Student, self).__init__(**kwargs)
-        if password:
-            self.set_password(password)
+    def __init__(
+        self,
+        id: int,
+        first_name: str,
+        last_name: str,
+        email: str,
+        password_hash: str,
+        roll_number: str,
+        is_active: bool = True,
+    ):
+        self.id            = id
+        self.first_name    = first_name
+        self.last_name     = last_name
+        self.email         = email
+        self.password_hash = password_hash
+        self.roll_number   = roll_number
+        self._is_active    = bool(is_active)
 
-    def set_password(self, password: str) -> None:
-        self.password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
+    # ------------------------------------------------------------------
+    # Flask-Login interface
+    # ------------------------------------------------------------------
 
-    def check_password(self, password: str) -> bool:
-        return bcrypt.check_password_hash(self.password_hash, password)
+    def get_id(self) -> str:
+        """Prefix 's_' to distinguish student sessions from admin sessions."""
+        return f"s_{self.id}"
+
+    @property
+    def is_active(self) -> bool:
+        return self._is_active
+
+    # ------------------------------------------------------------------
+    # Convenience properties
+    # ------------------------------------------------------------------
 
     @property
     def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
 
-    def get_id(self) -> str:
-        return f"s_{self.id}"
+    # ------------------------------------------------------------------
+    # Password helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def hash_password(password: str) -> str:
+        """Return a bcrypt hash for the given plaintext password."""
+        return _bcrypt.generate_password_hash(password).decode("utf-8")
+
+    def check_password(self, password: str) -> bool:
+        """Verify a plaintext password against the stored hash."""
+        return _bcrypt.check_password_hash(self.password_hash, password)
+
+    # ------------------------------------------------------------------
+    # SQL helpers — build Student from a DB row dict
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def from_row(cls, row: dict) -> "Student":
+        """Construct a Student instance from a pymysql DictCursor row."""
+        return cls(
+            id=row["id"],
+            first_name=row["first_name"],
+            last_name=row["last_name"],
+            email=row["email"],
+            password_hash=row["password_hash"],
+            roll_number=row["roll_number"],
+            is_active=row.get("is_active", 1),
+        )
 
     def __repr__(self):
         return f"<Student {self.email}>"
-
-
-@login_manager.user_loader
-def load_user(user_id: str):
-    if user_id.startswith("a_"):
-        from .admin import Admin
-        from ..extensions import db
-        return db.session.get(Admin, int(user_id[2:]))
-    elif user_id.startswith("s_"):
-        from ..extensions import db
-        return db.session.get(Student, int(user_id[2:]))
-    return None

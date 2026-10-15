@@ -22,16 +22,16 @@ CampusConnect is a production-ready, full-stack College Event Management System 
 
 ## Technology Stack
 
-* **Backend:** Python 3.12+, Flask, SQLAlchemy ORM, Flask-Login, Flask-WTF, Flask-Migrate
+* **Backend:** Python 3.12+, Flask, PyMySQL (Pure SQL, No ORM), Flask-Login, Flask-WTF, Flask-Bcrypt
 * **Frontend:** HTML5, CSS3, Vanilla JavaScript, Bootstrap 5 (Custom Themed), Jinja2
-* **Database:** MySQL (SQLite for development/testing)
-* **Security:** CSRF Protection, Bcrypt Password Hashing, SQL Injection Prevention (ORM)
+* **Database:** MySQL
+* **Security:** CSRF Protection, Bcrypt Password Hashing, SQL Injection Prevention (Parameterized Queries)
 
 ## Installation and Setup
 
 ### Prerequisites
 * Python 3.12 or higher
-* MySQL Server (if using MySQL for production)
+* MySQL Server
 
 ### Local Development Setup
 
@@ -61,14 +61,18 @@ CampusConnect is a production-ready, full-stack College Event Management System 
    FLASK_APP=run.py
    FLASK_ENV=development
    SECRET_KEY=your-secure-secret-key
-   DATABASE_URL=sqlite:///campus_connect.db
+   DB_HOST=localhost
+   DB_PORT=3306
+   DB_USER=root
+   DB_PASSWORD=your_password
+   DB_NAME=campus_connect
    ```
 
 5. **Initialize the Database**
-   Run the custom CLI commands to setup the database schemas and seed initial test data:
+   Run the CLI commands to setup the database tables and seed initial test data:
    ```bash
-   python manage.py db upgrade
-   python manage.py seed-db
+   flask init-db
+   flask seed-db
    ```
 
 6. **Run the Application**
@@ -94,8 +98,9 @@ pytest -s -v
 
 The system is built using the **Model-View-Controller (MVC)** architectural pattern via Flask's Application Factory pattern and Blueprints.
 
-* `app/models/`: SQLAlchemy Database Models
-* `app/routes/`: Flask Blueprints (Controllers)
+* `app/models/`: Plain Python Model Data Classes (from_row / domain logic)
+* `app/db.py`: Pure SQL Connection Manager and Schema Definitions
+* `app/routes/`: Flask Blueprints (Controllers) with parameterized raw SQL queries
 * `app/templates/`: Jinja2 HTML Templates (Views)
 * `app/static/`: CSS, JS, and image assets
 

@@ -1,9 +1,8 @@
 """
-CampusConnect - Application Factory
-=====================================
+CampusConnect - Application Factory (Pure SQL edition)
+=======================================================
 Uses the Application Factory Pattern to create a Flask app instance.
-This allows creating multiple app instances (e.g., for testing) with
-different configurations without modifying global state.
+Database layer: PyMySQL via app/db.py (no SQLAlchemy ORM).
 
 Why factory pattern?
 - Avoids circular imports
@@ -15,7 +14,8 @@ Why factory pattern?
 import os
 from flask import Flask, render_template
 from .config import config_map
-from .extensions import db, login_manager, bcrypt, migrate, csrf
+from .extensions import login_manager, bcrypt, csrf
+from .db import init_db_teardown
 
 
 def create_app(config_name: str = "default") -> Flask:
@@ -23,7 +23,7 @@ def create_app(config_name: str = "default") -> Flask:
     Application factory function.
 
     Args:
-        config_name: One of 'development', 'testing', 'production', 'default'
+        config_name: One of 'development', 'production', 'default'
 
     Returns:
         Configured Flask application instance
@@ -53,11 +53,19 @@ def create_app(config_name: str = "default") -> Flask:
     # ------------------------------------------------------------------
     # Initialize extensions with the app instance
     # ------------------------------------------------------------------
-    db.init_app(app)
     login_manager.init_app(app)
     bcrypt.init_app(app)
-    migrate.init_app(app, db)
     csrf.init_app(app)
+
+    # ------------------------------------------------------------------
+    # Register DB teardown (close PyMySQL connection per-request)
+    # ------------------------------------------------------------------
+    init_db_teardown(app)
+
+    # ------------------------------------------------------------------
+    # Register the Flask-Login user_loader using raw SQL
+    # ------------------------------------------------------------------
+    _register_user_loader()
 
     # ------------------------------------------------------------------
     # Register Flask Blueprints (route modules)
@@ -88,6 +96,46 @@ def create_app(config_name: str = "default") -> Flask:
     return app
 
 
+def _register_user_loader() -> None:
+    """
+    Register Flask-Login's user_loader using raw SQL.
+    Loads Admin or Student from the database by session token.
+    Token format:  'a_<id>'  → Admin
+                   's_<id>'  → Student
+    """
+    from .extensions import login_manager
+    from .models import Admin, Student
+
+    @login_manager.user_loader
+    def load_user(user_id: str):
+        from .db import get_db
+        conn = get_db()
+        try:
+            if user_id.startswith("a_"):
+                admin_id = int(user_id[2:])
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT id, name, email, password_hash FROM admins WHERE id = %s",
+                        (admin_id,)
+                    )
+                    row = cur.fetchone()
+                return Admin.from_row(row) if row else None
+
+            elif user_id.startswith("s_"):
+                student_id = int(user_id[2:])
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT id, first_name, last_name, email, password_hash, "
+                        "roll_number, is_active FROM students WHERE id = %s",
+                        (student_id,)
+                    )
+                    row = cur.fetchone()
+                return Student.from_row(row) if row else None
+        except Exception:
+            return None
+        return None
+
+
 def _register_blueprints(app: Flask) -> None:
     """Register all route blueprints with the application."""
 
@@ -96,7 +144,7 @@ def _register_blueprints(app: Flask) -> None:
     from .routes.student import student_bp
     from .routes.main import main_bp
 
-    app.register_blueprint(main_bp)               # / (home, landing page)
+    app.register_blueprint(main_bp)                         # /
     app.register_blueprint(auth_bp, url_prefix="/auth")     # /auth/login, /auth/register
     app.register_blueprint(admin_bp, url_prefix="/admin")   # /admin/dashboard
     app.register_blueprint(student_bp, url_prefix="/student")  # /student/dashboard
@@ -124,6 +172,24 @@ def _register_error_handlers(app: Flask) -> None:
 def _register_commands(app: Flask) -> None:
     """Register custom Flask CLI commands."""
 
+    @app.cli.command("init-db")
+    def init_db():
+        """Create all tables (run once on fresh setup)."""
+        from .db import get_db, create_tables
+        with app.app_context():
+            conn = get_db()
+            create_tables(conn)
+
+    @app.cli.command("reset-db")
+    def reset_db():
+        """Drop all tables and recreate (dev only)."""
+        from .db import get_db, drop_tables, create_tables
+        with app.app_context():
+            conn = get_db()
+            drop_tables(conn)
+            create_tables(conn)
+            print("[SUCCESS] Database reset complete.")
+
     @app.cli.command("seed-db")
     def seed_db():
         """Seed the database with initial admin and sample data."""
@@ -137,13 +203,6 @@ def _register_commands(app: Flask) -> None:
         from .utils.seed import create_default_admin
         create_default_admin()
         print("[SUCCESS] Default admin created.")
-
-    @app.cli.command("reset-db")
-    def reset_db():
-        """Drop all tables and recreate (dev only)."""
-        db.drop_all()
-        db.create_all()
-        print("[SUCCESS] Database reset complete.")
 
 
 def _register_context_processors(app: Flask) -> None:
@@ -166,11 +225,8 @@ def _register_context_processors(app: Flask) -> None:
 def _register_no_cache_headers(app: Flask) -> None:
     """
     Prevent browser from caching protected pages.
-    After logout, pressing back should NOT show protected content — it will
-    trigger a fresh request which the server will redirect to login.
+    After logout, pressing back should NOT show protected content.
     """
-    from flask import request as flask_request
-    from flask_login import current_user
 
     @app.after_request
     def set_no_cache(response):

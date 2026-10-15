@@ -1,7 +1,9 @@
 """
-CampusConnect - Models Package
-================================
-Imports all models so they're registered with SQLAlchemy when the app starts.
+CampusConnect - Models Package (Pure SQL)
+==========================================
+Exports all plain-Python model classes.
+These classes have NO ORM dependency — they are simple data containers
+populated from pymysql DictCursor rows via each class's from_row() method.
 """
 
 from .admin import Admin
