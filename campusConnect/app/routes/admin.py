@@ -88,18 +88,8 @@ def events():
         )
         items = [Event.from_row(r) for r in cur.fetchall()]
 
-    # Build a simple pagination object for the template
-    total_pages = (total + per_page - 1) // per_page
-    pagination = {
-        "items": items,
-        "page": page,
-        "pages": total_pages,
-        "total": total,
-        "has_prev": page > 1,
-        "has_next": page < total_pages,
-        "prev_num": page - 1,
-        "next_num": page + 1,
-    }
+    # Build pagination object for the template
+    pagination = Pagination(items, page, per_page, total)
     return render_template("admin/events.html", events_page=pagination)
 
 
@@ -324,15 +314,5 @@ def students():
         )
         items = [Student.from_row(r) for r in cur.fetchall()]
 
-    total_pages = (total + per_page - 1) // per_page
-    pagination = {
-        "items": items,
-        "page": page,
-        "pages": total_pages,
-        "total": total,
-        "has_prev": page > 1,
-        "has_next": page < total_pages,
-        "prev_num": page - 1,
-        "next_num": page + 1,
-    }
+    pagination = Pagination(items, page, per_page, total)
     return render_template("admin/students.html", students_page=pagination)
