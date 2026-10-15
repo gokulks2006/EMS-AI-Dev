@@ -1,31 +1,28 @@
 """
-CampusConnect - Flask Extensions
-=================================
-Centralizes all Flask extension instances so they can be imported
-anywhere without creating circular imports.
+CampusConnect - Flask Extensions (Pure SQL edition)
+=====================================================
+Centralizes Flask extension instances to avoid circular imports.
 
-Pattern: Initialize here without app, then call init_app() in the
-         application factory (app/__init__.py).
+Removed:
+  - flask_sqlalchemy (SQLAlchemy) — replaced by app/db.py (PyMySQL)
+  - flask_migrate    (Alembic)   — replaced by flask init-db
+
+Kept:
+  - Flask-Login  : Session management & current_user
+  - Flask-Bcrypt : Password hashing
+  - Flask-WTF    : CSRF protection
 """
 
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
-from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
-
-# ------------------------------------------------------------------
-# SQLAlchemy - ORM for MySQL
-# Provides database models, sessions, and query interface
-# ------------------------------------------------------------------
-db = SQLAlchemy()
 
 # ------------------------------------------------------------------
 # Flask-Login - Session management for authentication
 # Handles user session, login_required decorator, current_user
 # ------------------------------------------------------------------
 login_manager = LoginManager()
-login_manager.login_view = "auth.login"          # Redirect to login if not authenticated
+login_manager.login_view = "auth.login"          # Redirect if not authenticated
 login_manager.login_message = "Please log in to access this page."
 login_manager.login_message_category = "warning"
 
@@ -34,12 +31,6 @@ login_manager.login_message_category = "warning"
 # bcrypt is intentionally slow to prevent brute-force attacks
 # ------------------------------------------------------------------
 bcrypt = Bcrypt()
-
-# ------------------------------------------------------------------
-# Flask-Migrate - Database migration management via Alembic
-# Allows schema changes without dropping/recreating tables
-# ------------------------------------------------------------------
-migrate = Migrate()
 
 # ------------------------------------------------------------------
 # Flask-WTF CSRFProtect - Global CSRF token validation

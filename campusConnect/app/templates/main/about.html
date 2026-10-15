@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}About - CampusConnect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card p-4 border shadow-sm">
+        <h2 class="mb-3"><i class="bi bi-info-circle me-2"></i>About CampusConnect</h2>
+        <p class="lead text-muted">
+          CampusConnect is a college event management platform built to streamline the discovery, registration, and administration of campus events.
+        </p>
+        <hr />
+        <h5>Key Capabilities</h5>
+        <ul class="list-unstyled mt-3">
+          <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i><strong>Event Discovery:</strong> Students can explore workshops, seminars, competitions, and college fests.</li>
+          <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i><strong>Seat Reservation:</strong> Real-time seat allocation with ACID transactions.</li>
+          <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i><strong>Admin Control:</strong> Event lifecycle control, registration status updates, and student records.</li>
+        </ul>
+        <div class="mt-4">
+          <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+            <i class="bi bi-arrow-left me-1"></i>Back to Home
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
