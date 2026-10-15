@@ -40,21 +40,57 @@ class Registration:
         # Optional joined columns (populated when joining with other tables)
         event_title: str = None,
         event_date: datetime = None,
+        event_venue: str = None,
         student_name: str = None,
+        student_roll_number: str = None,
+        student_email: str = None,
     ):
-        self.id                = id
-        self.student_id        = student_id
-        self.event_id          = event_id
-        self.status            = status
-        self.remarks           = remarks
-        self.registered_at     = registered_at or datetime.utcnow()
-        self.approved_at       = approved_at
-        self.cancelled_at      = cancelled_at
-        self.attendance_marked = bool(attendance_marked)
+        self.id                  = id
+        self.student_id          = student_id
+        self.event_id            = event_id
+        self.status              = status
+        self.remarks             = remarks
+        self.registered_at       = registered_at or datetime.utcnow()
+        self.approved_at         = approved_at
+        self.cancelled_at        = cancelled_at
+        self.attendance_marked   = bool(attendance_marked)
         # Denormalized / joined fields for display convenience
-        self.event_title       = event_title
-        self.event_date        = event_date
-        self.student_name      = student_name
+        self.event_title         = event_title
+        self.event_date          = event_date
+        self.event_venue         = event_venue
+        self.student_name        = student_name
+        self.student_roll_number = student_roll_number
+        self.student_email       = student_email
+
+    @property
+    def event(self):
+        """Return an Event object or proxy for template compatibility (e.g. reg.event.title)."""
+        from .event import Event
+        return Event(
+            id=self.event_id,
+            title=self.event_title or "",
+            description="",
+            venue=self.event_venue or "",
+            event_date=self.event_date or datetime.utcnow(),
+            total_seats=0,
+            available_seats=0,
+            status="",
+        )
+
+    @property
+    def student(self):
+        """Return a Student-like proxy for template compatibility (e.g. reg.student.full_name)."""
+        class _StudentProxy:
+            def __init__(self, full_name, roll_number, email):
+                self.full_name = full_name or ""
+                self.roll_number = roll_number or ""
+                self.email = email or ""
+
+        return _StudentProxy(
+            full_name=self.student_name,
+            roll_number=self.student_roll_number,
+            email=self.student_email,
+        )
 
     # ------------------------------------------------------------------
     # SQL helpers — build Registration from a DB row dict
@@ -77,9 +113,12 @@ class Registration:
             cancelled_at=row.get("cancelled_at"),
             attendance_marked=row.get("attendance_marked", False),
             # Joined columns (present only in JOINed queries)
-            event_title=row.get("event_title"),
+            event_title=row.get("event_title") or row.get("title"),
             event_date=row.get("event_date"),
+            event_venue=row.get("event_venue") or row.get("venue"),
             student_name=row.get("student_name"),
+            student_roll_number=row.get("roll_number") or row.get("student_roll_number"),
+            student_email=row.get("student_email") or row.get("email"),
         )
 
     def to_dict(self) -> dict:
