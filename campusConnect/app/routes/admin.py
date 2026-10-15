@@ -12,6 +12,7 @@ from functools import wraps
 from ..db import get_db
 from ..models import Event, Registration, Student
 from ..forms import EventForm
+from ..utils.pagination import Pagination
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
