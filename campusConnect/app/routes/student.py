@@ -327,26 +327,43 @@ def cancel_registration(reg_id):
 
 @student_bp.route("/profile", methods=["GET", "POST"])
 def profile():
+    conn = get_db()
+    with conn.cursor() as cur:
+        cur.execute("SELECT id, name, code FROM departments ORDER BY name ASC")
+        departments = cur.fetchall()
+
     form = StudentProfileForm(obj=current_user)
+    form.department_id.choices = [(0, "Select Department")] + [
+        (d["id"], f"{d['name']} ({d['code']})") for d in departments
+    ]
+
+    if request.method == "GET":
+        form.department_id.data = current_user.department_id or 0
 
     if form.validate_on_submit():
-        conn = get_db()
+        dept_id = form.department_id.data if form.department_id.data > 0 else None
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    "UPDATE students SET first_name = %s, last_name = %s, roll_number = %s WHERE id = %s",
+                    "UPDATE students SET first_name = %s, last_name = %s, roll_number = %s, department_id = %s WHERE id = %s",
                     (
                         form.first_name.data,
                         form.last_name.data,
                         form.roll_number.data,
+                        dept_id,
                         current_user.id,
                     ),
                 )
             conn.commit()
             # Update the in-memory object so the page reflects changes immediately
-            current_user.first_name  = form.first_name.data
-            current_user.last_name   = form.last_name.data
-            current_user.roll_number = form.roll_number.data
+            current_user.first_name    = form.first_name.data
+            current_user.last_name     = form.last_name.data
+            current_user.roll_number   = form.roll_number.data
+            current_user.department_id = dept_id
+            dept_dict = next((d for d in departments if d["id"] == dept_id), None)
+            if dept_dict:
+                current_user.department_name = dept_dict["name"]
+                current_user.department_code = dept_dict["code"]
             flash("Profile updated successfully.", "success")
             return redirect(url_for("student.profile"))
         except Exception:

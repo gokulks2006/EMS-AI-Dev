@@ -16,6 +16,7 @@
             <th>Name</th>
             <th>Email</th>
             <th>Roll No</th>
+            <th>Department</th>
           </tr>
         </thead>
         <tbody>
@@ -24,9 +25,16 @@
             <td class="fw-bold">{{ student.full_name }}</td>
             <td class="small">{{ student.email }}</td>
             <td class="small">{{ student.roll_number or '-' }}</td>
+            <td class="small">
+              {% if student.department_name %}
+                <span class="badge bg-light text-dark border">{{ student.department_name }}</span>
+              {% else %}
+                <span class="text-muted">-</span>
+              {% endif %}
+            </td>
           </tr>
           {% else %}
-          <tr><td colspan="3" class="text-center text-muted py-3 small">No students found.</td></tr>
+          <tr><td colspan="4" class="text-center text-muted py-3 small">No students found.</td></tr>
           {% endfor %}
         </tbody>
       </table>

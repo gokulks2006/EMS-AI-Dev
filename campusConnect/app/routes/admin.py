@@ -240,9 +240,11 @@ def registrations(event_id):
             SELECT r.id, r.student_id, r.event_id, r.status, r.remarks,
                    r.registered_at, r.approved_at, r.cancelled_at, r.attendance_marked,
                    CONCAT(s.first_name, ' ', s.last_name) AS student_name,
-                   s.roll_number, s.email AS student_email
+                   s.roll_number, s.email AS student_email,
+                   d.name AS department_name, d.code AS department_code
             FROM registrations r
             JOIN students s ON s.id = r.student_id
+            LEFT JOIN departments d ON d.id = s.department_id
             WHERE r.event_id = %s
             ORDER BY r.id DESC
             """,
@@ -308,8 +310,13 @@ def students():
         total = cur.fetchone()["cnt"]
 
         cur.execute(
-            "SELECT id, first_name, last_name, email, roll_number, is_active "
-            "FROM students ORDER BY last_name ASC LIMIT %s OFFSET %s",
+            """
+            SELECT s.id, s.first_name, s.last_name, s.email, s.roll_number, s.is_active, s.department_id,
+                   d.name AS department_name, d.code AS department_code
+            FROM students s
+            LEFT JOIN departments d ON d.id = s.department_id
+            ORDER BY s.last_name ASC LIMIT %s OFFSET %s
+            """,
             (per_page, offset)
         )
         items = [Student.from_row(r) for r in cur.fetchall()]

@@ -125,8 +125,14 @@ def _register_user_loader() -> None:
                 student_id = int(user_id[2:])
                 with conn.cursor() as cur:
                     cur.execute(
-                        "SELECT id, first_name, last_name, email, password_hash, "
-                        "roll_number, is_active FROM students WHERE id = %s",
+                        """
+                        SELECT s.id, s.first_name, s.last_name, s.email, s.password_hash,
+                               s.roll_number, s.is_active, s.department_id,
+                               d.name AS department_name, d.code AS department_code
+                        FROM students s
+                        LEFT JOIN departments d ON d.id = s.department_id
+                        WHERE s.id = %s
+                        """,
                         (student_id,)
                     )
                     row = cur.fetchone()

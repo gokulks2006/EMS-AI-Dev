@@ -5,7 +5,7 @@ Handles login, registration, and logout using raw PyMySQL queries.
 No SQLAlchemy — all DB access via app.db.get_db().
 """
 
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 
 from ..db import get_db
@@ -23,12 +23,19 @@ def register():
             return redirect(url_for("admin.dashboard"))
         return redirect(url_for("student.dashboard"))
 
+    conn = get_db()
+    with conn.cursor() as cur:
+        cur.execute("SELECT id, name, code FROM departments ORDER BY name ASC")
+        departments = cur.fetchall()
+
     form = StudentRegistrationForm()
+    form.department_id.choices = [(0, "Select Department")] + [
+        (d["id"], f"{d['name']} ({d['code']})") for d in departments
+    ]
 
     if form.validate_on_submit():
         email       = form.email.data.lower().strip()
         roll_number = form.roll_number.data.strip().upper()
-        conn = get_db()
 
         # Check for duplicate email
         with conn.cursor() as cur:
@@ -50,8 +57,8 @@ def register():
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    INSERT INTO students (first_name, last_name, email, password_hash, roll_number)
-                    VALUES (%s, %s, %s, %s, %s)
+                    INSERT INTO students (first_name, last_name, email, password_hash, roll_number, department_id)
+                    VALUES (%s, %s, %s, %s, %s, %s)
                     """,
                     (
                         form.first_name.data.strip(),
@@ -59,6 +66,7 @@ def register():
                         email,
                         password_hash,
                         roll_number,
+                        form.department_id.data,
                     ),
                 )
                 new_id = cur.lastrowid
@@ -67,8 +75,13 @@ def register():
             # Load the new student and log them in
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT id, first_name, last_name, email, password_hash, roll_number, is_active "
-                    "FROM students WHERE id = %s",
+                    """
+                    SELECT s.id, s.first_name, s.last_name, s.email, s.password_hash, s.roll_number, s.is_active,
+                           s.department_id, d.name AS department_name, d.code AS department_code
+                    FROM students s
+                    LEFT JOIN departments d ON d.id = s.department_id
+                    WHERE s.id = %s
+                    """,
                     (new_id,)
                 )
                 row = cur.fetchone()
@@ -77,8 +90,9 @@ def register():
             flash("Account created successfully!", "success")
             return redirect(url_for("student.dashboard"))
 
-        except Exception:
+        except Exception as e:
             conn.rollback()
+            current_app.logger.error(f"Registration error: {e}", exc_info=True)
             flash("Registration failed due to a system error. Please try again.", "danger")
 
     return render_template("auth/register.html", form=form)
@@ -99,8 +113,13 @@ def login():
 
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id, first_name, last_name, email, password_hash, roll_number, is_active "
-                "FROM students WHERE email = %s",
+                """
+                SELECT s.id, s.first_name, s.last_name, s.email, s.password_hash, s.roll_number, s.is_active,
+                       s.department_id, d.name AS department_name, d.code AS department_code
+                FROM students s
+                LEFT JOIN departments d ON d.id = s.department_id
+                WHERE s.email = %s
+                """,
                 (email,)
             )
             row = cur.fetchone()

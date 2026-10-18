@@ -44,6 +44,7 @@ class Registration:
         student_name: str = None,
         student_roll_number: str = None,
         student_email: str = None,
+        student_department: str = None,
     ):
         self.id                  = id
         self.student_id          = student_id
@@ -61,6 +62,7 @@ class Registration:
         self.student_name        = student_name
         self.student_roll_number = student_roll_number
         self.student_email       = student_email
+        self.student_department  = student_department
 
     @property
     def event(self):
@@ -81,15 +83,18 @@ class Registration:
     def student(self):
         """Return a Student-like proxy for template compatibility (e.g. reg.student.full_name)."""
         class _StudentProxy:
-            def __init__(self, full_name, roll_number, email):
+            def __init__(self, full_name, roll_number, email, department):
                 self.full_name = full_name or ""
                 self.roll_number = roll_number or ""
                 self.email = email or ""
+                self.department = department or ""
+                self.department_name = department or ""
 
         return _StudentProxy(
             full_name=self.student_name,
             roll_number=self.student_roll_number,
             email=self.student_email,
+            department=self.student_department,
         )
 
     # ------------------------------------------------------------------
@@ -119,6 +124,7 @@ class Registration:
             student_name=row.get("student_name"),
             student_roll_number=row.get("roll_number") or row.get("student_roll_number"),
             student_email=row.get("student_email") or row.get("email"),
+            student_department=row.get("department_name") or row.get("student_department") or row.get("department"),
         )
 
     def to_dict(self) -> dict:

@@ -72,6 +72,14 @@ CREATE TABLE IF NOT EXISTS admins (
     INDEX idx_admin_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Departments table
+CREATE TABLE IF NOT EXISTS departments (
+    id   INT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    code VARCHAR(20)  NOT NULL UNIQUE,
+    INDEX idx_dept_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Students table
 CREATE TABLE IF NOT EXISTS students (
     id            INT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -81,8 +89,12 @@ CREATE TABLE IF NOT EXISTS students (
     password_hash VARCHAR(255) NOT NULL,
     roll_number   VARCHAR(20)  NOT NULL UNIQUE,
     is_active     TINYINT(1)   NOT NULL DEFAULT 1,
+    department_id INT          NULL,
     INDEX idx_student_email (email),
-    INDEX idx_student_roll  (roll_number)
+    INDEX idx_student_roll  (roll_number),
+    INDEX idx_student_dept  (department_id),
+    CONSTRAINT fk_student_department FOREIGN KEY (department_id)
+        REFERENCES departments(id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Events table
@@ -137,7 +149,7 @@ def drop_tables(conn: pymysql.connections.Connection) -> None:
     """Drop all application tables (dev/reset use only)."""
     with conn.cursor() as cur:
         cur.execute("SET FOREIGN_KEY_CHECKS = 0")
-        for table in ("registrations", "events", "students", "admins"):
+        for table in ("registrations", "events", "students", "admins", "departments"):
             cur.execute(f"DROP TABLE IF EXISTS {table}")
         cur.execute("SET FOREIGN_KEY_CHECKS = 1")
     conn.commit()

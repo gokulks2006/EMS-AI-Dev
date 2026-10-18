@@ -31,6 +31,11 @@
           {{ form.roll_number(class="form-control form-control-sm" + (" is-invalid" if form.roll_number.errors else "")) }}
           {% for e in form.roll_number.errors %}<div class="invalid-feedback small">{{ e }}</div>{% endfor %}
         </div>
+        <div class="mb-2">
+          {{ form.department_id.label(class="form-label small fw-semibold") }}
+          {{ form.department_id(class="form-select form-select-sm" + (" is-invalid" if form.department_id.errors else "")) }}
+          {% for e in form.department_id.errors %}<div class="invalid-feedback small">{{ e }}</div>{% endfor %}
+        </div>
         <div class="row g-2 mb-3">
           <div class="col-6">
             {{ form.password.label(class="form-label small fw-semibold") }}

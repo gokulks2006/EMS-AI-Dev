@@ -26,14 +26,20 @@ class Student(UserMixin):
         password_hash: str = "",
         roll_number: str = None,
         is_active: bool = True,
+        department_id: int = None,
+        department_name: str = None,
+        department_code: str = None,
     ):
-        self.id            = id
-        self.first_name    = first_name
-        self.last_name     = last_name
-        self.email         = email
-        self.password_hash = password_hash
-        self.roll_number   = roll_number
-        self._is_active    = bool(is_active)
+        self.id              = id
+        self.first_name      = first_name
+        self.last_name       = last_name
+        self.email           = email
+        self.password_hash   = password_hash
+        self.roll_number     = roll_number
+        self._is_active      = bool(is_active)
+        self.department_id   = department_id
+        self.department_name = department_name
+        self.department_code = department_code
 
     # ------------------------------------------------------------------
     # Flask-Login interface
@@ -54,6 +60,10 @@ class Student(UserMixin):
     @property
     def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
+
+    @property
+    def department(self) -> str:
+        return self.department_name or ""
 
     # ------------------------------------------------------------------
     # Password helpers
@@ -83,6 +93,9 @@ class Student(UserMixin):
             password_hash=row.get("password_hash", ""),
             roll_number=row.get("roll_number"),
             is_active=row.get("is_active", 1),
+            department_id=row.get("department_id"),
+            department_name=row.get("department_name"),
+            department_code=row.get("department_code"),
         )
 
     def __repr__(self):

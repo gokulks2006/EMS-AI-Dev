@@ -44,9 +44,45 @@ def create_default_admin():
     print(f"[SUCCESS] Admin created: {admin_email}")
 
 
+def seed_departments():
+    """Seed college departments for student registration."""
+    conn = get_db()
+    departments_data = [
+        {"name": "Computer Science & Engineering", "code": "CSE"},
+        {"name": "Information Technology", "code": "IT"},
+        {"name": "Electronics & Communication Engineering", "code": "ECE"},
+        {"name": "Electrical & Electronics Engineering", "code": "EEE"},
+        {"name": "Mechanical Engineering", "code": "ME"},
+        {"name": "Civil Engineering", "code": "CE"},
+        {"name": "Biotechnology", "code": "BT"},
+        {"name": "Master of Business Administration", "code": "MBA"},
+        {"name": "Master of Computer Applications", "code": "MCA"},
+    ]
+
+    inserted = 0
+    for d in departments_data:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM departments WHERE code = %s OR name = %s", (d["code"], d["name"]))
+            if cur.fetchone():
+                continue
+            cur.execute(
+                "INSERT INTO departments (name, code) VALUES (%s, %s)",
+                (d["name"], d["code"])
+            )
+            inserted += 1
+
+    conn.commit()
+    print(f"[SUCCESS] {inserted} department(s) seeded.")
+
+
 def seed_sample_students():
     """Seed sample student accounts for testing."""
     conn = get_db()
+
+    # Get department map
+    with conn.cursor() as cur:
+        cur.execute("SELECT id, code FROM departments")
+        dept_map = {row["code"]: row["id"] for row in cur.fetchall()}
 
     students_data = [
         {
@@ -54,36 +90,49 @@ def seed_sample_students():
             "last_name":  "Mehta",
             "email":       "arjun.mehta@student.campusconnect.com",
             "roll_number": "CSE2024001",
+            "dept_code":   "CSE",
         },
         {
             "first_name": "Priya",
             "last_name":  "Singh",
             "email":       "priya.singh@student.campusconnect.com",
             "roll_number": "CSE2024002",
+            "dept_code":   "IT",
         },
         {
             "first_name": "Rahul",
             "last_name":  "Gupta",
             "email":       "rahul.gupta@student.campusconnect.com",
             "roll_number": "CSE2024003",
+            "dept_code":   "ECE",
         },
     ]
 
     inserted = 0
     for s in students_data:
+        dept_id = dept_map.get(s["dept_code"])
         with conn.cursor() as cur:
-            cur.execute("SELECT id FROM students WHERE email = %s", (s["email"],))
-            if cur.fetchone():
+            cur.execute("SELECT id, department_id FROM students WHERE email = %s", (s["email"],))
+            existing = cur.fetchone()
+            if existing:
+                if not existing.get("department_id") and dept_id:
+                    cur.execute("UPDATE students SET department_id = %s WHERE id = %s", (dept_id, existing["id"]))
                 continue
 
         pw_hash = Student.hash_password("Student@123")
         with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO students (first_name, last_name, email, password_hash, roll_number) "
-                "VALUES (%s, %s, %s, %s, %s)",
-                (s["first_name"], s["last_name"], s["email"], pw_hash, s["roll_number"])
+                "INSERT INTO students (first_name, last_name, email, password_hash, roll_number, department_id) "
+                "VALUES (%s, %s, %s, %s, %s, %s)",
+                (s["first_name"], s["last_name"], s["email"], pw_hash, s["roll_number"], dept_id)
             )
         inserted += 1
+
+    # Also update any other existing students without a department (e.g. default to CSE)
+    default_dept_id = dept_map.get("CSE")
+    if default_dept_id:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE students SET department_id = %s WHERE department_id IS NULL", (default_dept_id,))
 
     conn.commit()
     print(f"[SUCCESS] {inserted} student(s) seeded.")
@@ -171,6 +220,7 @@ def seed_database():
     """Run all seed functions in dependency order."""
     print("Seeding database...")
     create_default_admin()
+    seed_departments()
     seed_sample_students()
     seed_sample_events()
     print("[SUCCESS] Database seeding complete!")

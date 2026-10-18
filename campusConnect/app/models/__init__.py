@@ -10,10 +10,12 @@ from .admin import Admin
 from .student import Student
 from .event import Event
 from .registration import Registration
+from .department import Department
 
 __all__ = [
     "Admin",
     "Student",
     "Event",
     "Registration",
+    "Department",
 ]
