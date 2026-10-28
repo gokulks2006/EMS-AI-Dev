@@ -47,13 +47,18 @@ Walk the evaluator through this step-by-step. You can point at the screen or the
 
 ---
 
-**Step 4 — SQLAlchemy Talks to the MySQL Database**
+**Step 4 — Raw SQL Queries Interact with the MySQL Database**
 
-> We don't write raw SQL — we use **SQLAlchemy**, which is an ORM (Object-Relational Mapper). It lets us write Python objects, and it translates them into SQL automatically. When the checks pass, two things happen inside a single **transaction**:
-> - `available_seats` on the event is decreased by 1
-> - A new row is inserted into the `registrations` table with the student's ID, event ID, status `"approved"`, and a timestamp
->
-> Then `db.session.commit()` is called — that's what actually **saves** everything to MySQL permanently. If anything fails before this line, nothing is saved (atomic transaction).
+We use **raw SQL queries** instead of an ORM like SQLAlchemy. Our Flask backend executes SQL statements directly against MySQL through a database connection and cursor.
+
+When the student registration checks pass, the backend performs the required database operations:
+
+- Updates the event's available seat count.
+- Inserts a new record into the `registrations` table with the student's ID, event ID, registration status, and timestamp.
+
+These operations should be handled within a database transaction so that related changes succeed or fail together.
+
+After the operations succeed, the transaction is committed to save the changes. If an error occurs, the transaction can be rolled back to prevent partial updates.
 
 ---
 
@@ -74,7 +79,7 @@ Walk the evaluator through this step-by-step. You can point at the screen or the
        |
        | Python logic runs (seat check, duplicate check)
        ↓
-[SQLAlchemy ORM]
+[PURE Sql]
        |
        | INSERT into registrations, UPDATE events
        ↓
@@ -101,10 +106,16 @@ Walk the evaluator through this step-by-step. You can point at the screen or the
 
 ---
 
-### Q2: "What is SQLAlchemy and why not just write plain SQL queries?"
+### Q2: "Why did you use raw SQL instead of an ORM like SQLAlchemy?"
 
 **Your Answer:**
-> *"SQLAlchemy is an ORM — an Object-Relational Mapper. It lets us work with database tables as Python classes instead of writing raw SQL strings. For example, instead of writing `INSERT INTO registrations VALUES (...)`, we create a `Registration` object and call `db.session.add()`. The big advantage is safety — SQLAlchemy automatically prevents SQL injection attacks because it never directly puts user input into a query string. It also makes the code easier to read and maintain. That said, we still understand what SQL it's generating — for example, the `with_for_update()` call generates a `SELECT ... FOR UPDATE` lock in MySQL to prevent race conditions."*
+> *"We use raw SQL queries to interact with our MySQL database through our Flask backend. Instead of relying on an ORM to generate SQL automatically, we write SQL statements directly.
+
+This gives us direct control over database queries and helps us understand how data is retrieved, inserted, updated, and deleted.
+
+For example, when a student registers for an event, we execute SQL queries to check registration conditions and save the registration.
+
+We also need to use parameterized queries to protect against SQL injection and database transactions to maintain data consistency"*
 
 ---
 
